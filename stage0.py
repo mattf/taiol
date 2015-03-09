@@ -23,7 +23,8 @@ def calc_dist(event):
 # map:    restructure w/ bucket as key, for grouping
 # group:  group by buckets, result is: bucket + closest event per identify
 # sort:   so we can process buckets in temporal order
-d = data.map(lambda e: ((e.time/5000, e.minor), (calc_dist(e), e.scannerID))) \
+d = data.filter(lambda e: e.messageType == 0) \
+        .map(lambda e: ((e.time/5000, (e.major, e.minor)), (calc_dist(e), e.scannerID))) \
         .reduceByKey(min) \
         .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
         .groupByKey() \
