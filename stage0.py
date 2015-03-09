@@ -1,5 +1,6 @@
 #!/usr/share/spark/bin/pyspark
 
+from sys import argv
 from time import ctime
 
 from pyspark.context import SparkContext
@@ -9,7 +10,7 @@ sc = SparkContext(appName="filter")
 
 sqlCtx = SQLContext(sc)
 
-data = sqlCtx.jsonFile("/data.json")
+data = sqlCtx.jsonFile(len(argv) > 1 and argv[1] or "/data.json")
 
 def calc_dist(event):
   if event.rssi == 0:
