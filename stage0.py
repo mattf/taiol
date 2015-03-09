@@ -22,6 +22,7 @@ def calc_dist(event):
 
 BUCKET_WIDTH_SEC = 5
 
+# filter: focus only on SCANNER_READ events, messageType=0
 # map:    put events in buckets of 5s width, extracting identity, distance and location
 # reduce: find smallest distance, location pair per bucket, identity
 # map:    restructure w/ bucket as key, for grouping
