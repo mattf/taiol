@@ -1,16 +1,36 @@
 #!/usr/share/spark/bin/pyspark
 
+import optparse
 from sys import argv
 from time import ctime
 
+from null import Null
+
+from proton import *
+
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext
+
+
+parser = optparse.OptionParser(
+  "usage: %prog [options] [datafile]",
+  description="Process a datafile and emit results to stdout or an AMQP 1.0 address")
+parser.add_option("-a", "--address", default=None,
+                  help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
+opts, args = parser.parse_args()
+
+datafile = "/data.json"
+if args:
+  datafile = args.pop(0)
+
+messenger = opts.address and Messenger() or Null()
+messenger.start()
 
 sc = SparkContext(appName="stage0")
 
 sqlCtx = SQLContext(sc)
 
-data = sqlCtx.jsonFile(len(argv) > 1 and argv[1] or "/data.json")
+data = sqlCtx.jsonFile(datafile)
 
 def calc_dist(event):
   if event.rssi == 0:
@@ -39,6 +59,7 @@ d = data.filter(lambda e: e.messageType == 0) \
         .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
         .groupByKey() \
         .sortByKey()
+message = Message()
 UNKNOWN = ('Unknown', 0)
 locations = {}
 last_bucket = 0
@@ -63,8 +84,20 @@ for moment in d.collect():
       locations[who] = UNKNOWN
       changed.append(who)
   for who in changed:
-    print ctime(bucket_to_s(bucket)), who, locations[who][0], locations[who][1]
+    event = {"user_id": who,
+             "timestamp": bucket_to_s(bucket),
+             "location_id": locations[who][0],
+             "timestamp_s": ctime(bucket_to_s(bucket)),
+             "location_distance": locations[who][1]}
+    print event
+    message.address = opts.address
+    message.properties = event
+    messenger.put(message)
+    messenger.send()
+
   last_bucket = bucket
+
+messenger.stop()
 
 # TODO
 #  . reduce jitter
