@@ -10,7 +10,7 @@ gunzip -c FourScannersRun#1-2015-03-07.json.gz | sed 's/}{/}\n{/' | awk '{ORS=""
 
 Run stage0.py -
 
-(only need to do this once)
+(only need to do these once)
 sudo docker build -t spark docker-spark
 sudo docker build -t taiol docker-taiol
 
