@@ -6,7 +6,7 @@ from time import ctime
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext
 
-sc = SparkContext(appName="filter")
+sc = SparkContext(appName="stage0")
 
 sqlCtx = SQLContext(sc)
 
