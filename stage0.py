@@ -50,7 +50,12 @@ def ms_to_bucket(ms):
 def bucket_to_s(bucket):
   return bucket * BUCKET_WIDTH_SEC
 
+locations = {}
+last_bucket = 0
 def process(rdd):
+  global locations
+  global last_bucket
+
   data = sqlCtx.jsonRDD(rdd)
 
   # filter: focus only on SCANNER_READ events, messageType=0
@@ -66,8 +71,6 @@ def process(rdd):
           .groupByKey() \
           .sortByKey()
   message = Message()
-  locations = {}
-  last_bucket = 0
   for moment in d.collect():
     (bucket, events) = moment
     if last_bucket + 1 != bucket:
