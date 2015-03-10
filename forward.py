@@ -12,6 +12,7 @@ parser = optparse.OptionParser(
 opts, args = parser.parse_args()
 
 mng = Messenger()
+mng.incoming_window = 2048
 mng.start()
 
 for a in args:
