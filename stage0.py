@@ -13,7 +13,7 @@ from pyspark.sql import SQLContext
 
 
 parser = optparse.OptionParser(
-  "usage: %prog [options] [datafile]",
+  "usage: %prog [options]",
   description="Process a datafile and emit results to stdout or an AMQP 1.0 address")
 parser.add_option("-a", "--address", default=None,
                   help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
