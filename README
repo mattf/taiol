@@ -19,3 +19,4 @@ sudo docker run -w /mnt -v $PWD:/mnt taiol spark-submit stage0.py -a amqp://1.2.
 Other -
 
 Stage data: sudo docker run -w /mnt -v $PWD:/mnt taiol ./play.py
+Fordwarder: ./forward.py amqp://1.2.3.4/name
