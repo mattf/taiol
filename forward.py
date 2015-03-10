@@ -20,6 +20,7 @@ for a in args:
 
 msg = Message()
 sock = socket.socket()
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(('0.0.0.0', 1984))
 print 'listening at:', sock.getsockname()
 sock.listen(1)
