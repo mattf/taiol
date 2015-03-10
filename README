@@ -15,3 +15,7 @@ sudo docker build -t spark docker-spark
 sudo docker build -t taiol docker-taiol
 
 sudo docker run -w /mnt -v $PWD:/mnt taiol spark-submit stage0.py -a amqp://1.2.3.4/name -d data.json
+
+Other -
+
+Stage data: sudo docker run -w /mnt -v $PWD:/mnt taiol ./play.py
