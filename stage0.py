@@ -102,11 +102,17 @@ def process(rdd):
 
     last_bucket = bucket
 
+def protect(func):
+  def _protect(rdd):
+    if rdd.take(1):
+      func(rdd)
+  return _protect
+
 if opts.remote:
   host, port = opts.remote.split(':')
   ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
   data = ssc.socketTextStream(host, int(port))
-  data.foreachRDD(process)
+  data.foreachRDD(protect(process))
   ssc.start()
   ssc.awaitTermination()
 else:
