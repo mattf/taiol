@@ -56,6 +56,8 @@ def process(rdd):
   global locations
   global last_bucket
 
+  #print 'processing:', ctime(bucket_to_s(last_bucket)), locations
+
   data = sqlCtx.jsonRDD(rdd)
 
   # filter: focus only on SCANNER_READ events, messageType=0
@@ -64,12 +66,15 @@ def process(rdd):
   # map:    restructure w/ bucket as key, for grouping
   # group:  group by buckets, result is: bucket + closest event per identify
   # sort:   so we can process buckets in temporal order
-  d = data.filter(lambda e: e.messageType == 0) \
-          .map(lambda e: ((ms_to_bucket(e.time), (e.major, e.minor)), (calc_dist(e), e.scannerID))) \
-          .reduceByKey(min) \
-          .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
-          .groupByKey() \
-          .sortByKey()
+  d = data.filter(lambda e: e.messageType == 0)
+  # TODO: this filter will make us lose events. lose events or republish an event for a bucket or create a memory of last (few?) buckets
+  if last_bucket > 0:
+    d = d.filter(lambda e: ms_to_bucket(e.time) > last_bucket)
+  d = d.map(lambda e: ((ms_to_bucket(e.time), (e.major, e.minor)), (calc_dist(e), e.scannerID))) \
+       .reduceByKey(min) \
+       .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
+       .groupByKey() \
+       .sortByKey()
   message = Message()
   for moment in d.collect():
     (bucket, events) = moment
@@ -125,5 +130,4 @@ messenger.stop()
 
 # TODO
 #  . reduce jitter
-#  . when streaming, filter events from buckets that have already been processed (slow arriving events)
 #  . when streaming, streaming context width and bucket width should align, may result in one bucket (groupbykey)
