@@ -17,11 +17,11 @@ parser = optparse.OptionParser(
   description="Process a datafile and emit results to stdout or an AMQP 1.0 address")
 parser.add_option("-a", "--address", default=None,
                   help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
+parser.add_option("-d", "--datafile", default=None,
+                  help="Datafile to process")
 opts, args = parser.parse_args()
 
-datafile = "/data.json"
-if args:
-  datafile = args.pop(0)
+datafile = opts.datafile or "data.json"
 
 messenger = opts.address and Messenger() or Null()
 messenger.start()
