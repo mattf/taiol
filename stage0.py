@@ -9,6 +9,7 @@ from null import Null
 from proton import *
 
 from pyspark.context import SparkContext
+from pyspark.streaming import StreamingContext
 from pyspark.sql import SQLContext
 
 
@@ -19,6 +20,8 @@ parser.add_option("-a", "--address", default=None,
                   help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
 parser.add_option("-d", "--datafile", default=None,
                   help="Datafile to process")
+parser.add_option("-r", "--remote", default=None,
+                  help="Read data from a remote endpoint, e.g. localhost:1984")
 opts, args = parser.parse_args()
 
 datafile = opts.datafile or "data.json"
@@ -99,7 +102,15 @@ def process(rdd):
 
     last_bucket = bucket
 
-process(sc.textFile(datafile))
+if opts.remote:
+  host, port = opts.remote.split(':')
+  ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
+  data = ssc.socketTextStream(host, int(port))
+  data.foreachRDD(process)
+  ssc.start()
+  ssc.awaitTermination()
+else:
+  process(sc.textFile(datafile))
 
 messenger.stop()
 
