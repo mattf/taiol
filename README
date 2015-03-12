@@ -1,12 +1,10 @@
 Get data -
 
-curl -L -O https://github.com/starksm64/RaspberryPiBeaconParser/blob/master/data/FourScannersRun%231-2015-03-07.json.gz\?raw=true
-
-mv FourScannersRun%231-2015-03-07.json.gz\?raw=true FourScannersRun#1-2015-03-07.json.gz
+curl -L -O https://github.com/starksm64/RaspberryPiBeaconParser/raw/master/data/FourScannersRun1-2015-03-10.json.gz
 
 Massage data, need 1:1 event:line -
 
-gunzip -c FourScannersRun#1-2015-03-07.json.gz | sed 's/}{/}\n{/' | awk '{ORS=""; print} /}/ {ORS="\n"; print ""}' > data.json
+gunzip -c FourScannersRun1-2015-03-10.json.gz | sed 's/}{/}\n{/' | awk '{ORS=""; print} /}/ {ORS="\n"; print ""}' > data.json
 
 Run stage0.py -
 
