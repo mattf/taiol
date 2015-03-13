@@ -9,6 +9,7 @@ from null import Null
 from proton import *
 
 from pyspark.context import SparkContext
+from pyspark.storagelevel import StorageLevel
 from pyspark.streaming import StreamingContext
 from pyspark.sql import SQLContext
 
@@ -29,7 +30,7 @@ datafile = opts.datafile or "data.json"
 messenger = opts.address and Messenger() or Null()
 messenger.start()
 
-sc = SparkContext(appName="stage0")
+sc = SparkContext("local[4]", appName="stage0")
 
 sqlCtx = SQLContext(sc)
 
@@ -119,7 +120,7 @@ def protect(func):
 if opts.remote:
   host, port = opts.remote.split(':')
   ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
-  data = ssc.socketTextStream(host, int(port))
+  data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
   data.foreachRDD(protect(process))
   ssc.start()
   ssc.awaitTermination()
