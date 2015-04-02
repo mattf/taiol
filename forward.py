@@ -25,13 +25,14 @@ sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(('0.0.0.0', 1984))
 print 'listening at:', sock.getsockname()
 sock.listen(1)
-(client, client_addr) = sock.accept()
-print 'connection from:', client_addr
 while True:
-    mng.recv()
-    while mng.incoming:
-        try:
-            mng.get(msg)
-            client.sendall(json.dumps(msg.properties) + "\n")
-        except Exception, e:
-            print e
+    (client, client_addr) = sock.accept()
+    print 'connection from:', client_addr
+    while True:
+        mng.recv()
+        while mng.incoming:
+            try:
+                mng.get(msg)
+                client.sendall(json.dumps(msg.properties) + "\n")
+            except Exception, e:
+                print e
