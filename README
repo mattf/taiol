@@ -17,4 +17,4 @@ sudo docker run --privileged -w /mnt -v $PWD:/mnt taiol spark-submit stage0.py -
 Other -
 
 Stage data: sudo docker run --privileged -w /mnt -v $PWD:/mnt taiol ./play.py data.json amqp://1.2.3.4/name
-Fordwarder: ./forward.py amqp://1.2.3.4/name
+Fordwarder: sudo docker run --privileged -p 1984:1984 -w /mnt -v $PWD:/mnt taiol ./forward.py amqp://1.2.3.4/name
