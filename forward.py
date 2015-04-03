@@ -28,11 +28,12 @@ sock.listen(1)
 while True:
     (client, client_addr) = sock.accept()
     print 'connection from:', client_addr
-    while True:
-        mng.recv()
-        while mng.incoming:
-            try:
+    try:
+        while True:
+            mng.recv()
+            while mng.incoming:
                 mng.get(msg)
                 client.sendall(json.dumps(msg.properties) + "\n")
-            except Exception, e:
-                print e
+    except Exception, e:
+        client.close()
+        print e
