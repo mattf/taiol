@@ -12,9 +12,9 @@ Run stage0.py -
 sudo docker build -t spark docker-spark
 sudo docker build -t taiol docker-taiol
 
-sudo docker run --privileged -w /mnt -v $PWD:/mnt taiol spark-submit stage0.py -a amqp://1.2.3.4/name -d data.json
+sudo docker run --privileged -w /mnt -v $PWD:/mnt -it taiol spark-submit stage0.py -a amqp://1.2.3.4/name -d data.json
 
 Other -
 
-Stage data: sudo docker run --privileged -w /mnt -v $PWD:/mnt taiol ./play.py data.json amqp://1.2.3.4/name
-Fordwarder: sudo docker run --privileged -p 1984:1984 -w /mnt -v $PWD:/mnt taiol ./forward.py amqp://1.2.3.4/name
+Stage data: sudo docker run --privileged -w /mnt -v $PWD:/mnt -it taiol ./play.py data.json amqp://1.2.3.4/name
+Fordwarder: sudo docker run --privileged -p 1984:1984 -w /mnt -v $PWD:/mnt -it taiol ./forward.py amqp://1.2.3.4/name
