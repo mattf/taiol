@@ -2,7 +2,11 @@
 
 import optparse
 from sys import argv
-from time import ctime
+from time import ctime, time
+
+import collections
+
+import numpy
 
 from null import Null
 
@@ -53,9 +57,12 @@ def bucket_to_s(bucket):
 
 locations = {}
 last_bucket = 0
+samples = collections.deque(maxlen=25)
 def process(rdd):
   global locations
   global last_bucket
+
+  mark0 = time()
 
   #print 'processing:', ctime(bucket_to_s(last_bucket)), locations
 
@@ -110,6 +117,11 @@ def process(rdd):
       messenger.send()
 
     last_bucket = bucket
+
+  mark1 = time()
+
+  samples.append(mark1-mark0)
+  print mark1-mark0, numpy.mean(samples), numpy.var(samples)
 
 def protect(func):
   def _protect(rdd):
