@@ -71,7 +71,7 @@ def process(rdd):
   # TODO: this filter will make us lose events. lose events or republish an event for a bucket or create a memory of last (few?) buckets
   if last_bucket > 0:
     d = d.filter(lambda e: ms_to_bucket(e.time) > last_bucket)
-  d = d.map(lambda e: ((ms_to_bucket(e.time), (e.major, e.minor)), (calc_dist(e), e.scannerID))) \
+  d = d.map(lambda e: ((ms_to_bucket(e.time), e.minor), (calc_dist(e), e.scannerID))) \
        .reduceByKey(min) \
        .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
        .groupByKey() \
