@@ -58,74 +58,9 @@ def bucket_to_s(bucket):
 locations = {}
 missing = {}
 retransmit = {}
-last_bucket = 0
 samples = collections.deque(maxlen=25)
+
 def process(rdd):
-  global locations
-  global last_bucket
-
-  mark0 = time()
-
-  #print 'processing:', ctime(bucket_to_s(last_bucket)), locations
-
-  data = sqlCtx.jsonRDD(rdd)
-
-  # filter: focus only on SCANNER_READ events, messageType=0
-  # map:    put events in buckets of 5s width, extracting identity, distance and location
-  # reduce: find smallest distance, location pair per bucket, identity
-  # map:    restructure w/ bucket as key, for grouping
-  # group:  group by buckets, result is: bucket + closest event per identify
-  # sort:   so we can process buckets in temporal order
-  d = data.filter(lambda e: e.messageType == 0)
-  # TODO: this filter will make us lose events. lose events or republish an event for a bucket or create a memory of last (few?) buckets
-  if last_bucket > 0:
-    d = d.filter(lambda e: ms_to_bucket(e.time) > last_bucket)
-  d = d.map(lambda e: ((ms_to_bucket(e.time), e.minor), (calc_dist(e), e.scannerID))) \
-       .reduceByKey(min) \
-       .map(lambda e: (e[0][0], (e[0][1], e[1][0], e[1][1]))) \
-       .groupByKey() \
-       .sortByKey()
-  message = Message()
-  for moment in d.collect():
-    (bucket, events) = moment
-    if last_bucket + 1 != bucket:
-      print 'missing bucket detected'
-      for who in locations.keys():
-        locations[who] = UNKNOWN
-    changed = []
-    present = []
-    for event in list(events):
-      (who, distance, room) = event
-      present.append(who)
-      if who not in locations:
-        locations[who] = UNKNOWN
-      if locations[who][0] != room:
-        changed.append(who)
-      locations[who] = (room, distance)
-    for who in locations.keys():
-      if who not in present and locations[who] != UNKNOWN:
-        locations[who] = UNKNOWN
-        changed.append(who)
-    for who in changed:
-      event = {"user_id": who,
-               "timestamp": bucket_to_s(bucket),
-               "location_id": locations[who][0],
-               "timestamp_s": ctime(bucket_to_s(bucket)),
-               "location_distance": locations[who][1]}
-      print event['timestamp_s'], event['user_id'], event['location_id']
-      message.address = opts.address
-      message.properties = event
-      messenger.put(message)
-      messenger.send()
-
-    last_bucket = bucket
-
-  mark1 = time()
-
-  samples.append(mark1-mark0)
-  print mark1-mark0, numpy.mean(samples), numpy.var(samples)
-
-def process2(rdd):
   global locations
 
   mark0 = time()
@@ -195,7 +130,7 @@ def protect(func):
 host, port = opts.remote.split(':')
 ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
 data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
-data.foreachRDD(protect(process2))
+data.foreachRDD(protect(process))
 ssc.start()
 ssc.awaitTermination()
 
