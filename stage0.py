@@ -20,16 +20,16 @@ from pyspark.sql import SQLContext
 
 parser = optparse.OptionParser(
   "usage: %prog [options]",
-  description="Process a datafile and emit results to stdout or an AMQP 1.0 address")
+  description="Process a stream of events and emit results to stdout or an AMQP 1.0 address")
 parser.add_option("-a", "--address", default=None,
                   help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
-parser.add_option("-d", "--datafile", default=None,
-                  help="Datafile to process")
 parser.add_option("-r", "--remote", default=None,
                   help="Read data from a remote endpoint, e.g. localhost:1984")
 opts, args = parser.parse_args()
 
-datafile = opts.datafile or "data.json"
+if not opts.remote:
+  parser.error("required --remote missing")
+  exit(1)
 
 messenger = opts.address and Messenger() or Null()
 messenger.start()
@@ -192,15 +192,12 @@ def protect(func):
       func(rdd)
   return _protect
 
-if opts.remote:
-  host, port = opts.remote.split(':')
-  ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
-  data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
-  data.foreachRDD(protect(process2))
-  ssc.start()
-  ssc.awaitTermination()
-else:
-  process(sc.textFile(datafile))
+host, port = opts.remote.split(':')
+ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
+data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
+data.foreachRDD(protect(process2))
+ssc.start()
+ssc.awaitTermination()
 
 messenger.stop()
 
