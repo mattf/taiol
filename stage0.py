@@ -50,10 +50,6 @@ def calc_dist(event):
 UNKNOWN = ('Unknown', 0)
 
 BUCKET_WIDTH_SEC = 5
-def ms_to_bucket(ms):
-  return ms / (BUCKET_WIDTH_SEC * 1000)
-def bucket_to_s(bucket):
-  return bucket * BUCKET_WIDTH_SEC
 
 locations = {}
 missing = {}
