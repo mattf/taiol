@@ -131,6 +131,3 @@ ssc.start()
 ssc.awaitTermination()
 
 messenger.stop()
-
-# TODO
-#  . when streaming, streaming context width and bucket width should align, may result in one bucket (groupbykey)
