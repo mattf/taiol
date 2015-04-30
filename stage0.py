@@ -57,6 +57,7 @@ def bucket_to_s(bucket):
 
 locations = {}
 missing = {}
+retransmit = {}
 last_bucket = 0
 samples = collections.deque(maxlen=25)
 def process(rdd):
@@ -165,6 +166,10 @@ def process2(rdd):
       if not missing[who]:
         locations[who] = UNKNOWN
         changed.append(who)
+  for who in retransmit.keys():
+    retransmit[who] = retransmit[who] - 1
+    if not retransmit[who] and who not in changed:
+      changed.append(who)
   for who in changed:
     event = {"user_id": who,
              "location_id": locations[who][0],
@@ -174,6 +179,7 @@ def process2(rdd):
     message.properties = event
     messenger.put(message)
     messenger.send()
+    retransmit[who] = 10 # resend location at least every 10 windows
 
   mark1 = time()
 
