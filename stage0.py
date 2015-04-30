@@ -139,7 +139,7 @@ def process2(rdd):
           .groupByKey()
 #  for k,v in d.collect():
 #    print "oopa",k,list(v)
-  d = d.map(lambda e: (e[0][0], (numpy.median(list(e[1])), e[0][1], len(e[1]))))
+  d = d.map(lambda e: (e[0][0], (float(numpy.median(list(e[1]))), e[0][1], len(e[1]))))
 #  for k,v in d.collect():
 #    print "oopb",k,v
   d = d.reduceByKey(min)
