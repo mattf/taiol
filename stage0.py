@@ -131,16 +131,26 @@ def process2(rdd):
   data = sqlCtx.jsonRDD(rdd)
 
   # filter: focus only on SCANNER_READ events, messageType=0
-  # map:    extracting key: identity, value: distance and location
-  # reduce: find smallest distance per identity
+  # map:    extracting key: identity, location, value: distance
+  # reduce: find median distance per identity, location
+  # map:    extract key: identity, value: distance, location
   d = data.filter(lambda e: e.messageType == 0) \
-          .map(lambda e: (e.minor, (calc_dist(e), e.scannerID))) \
-          .reduceByKey(min)
+          .map(lambda e: ((e.minor, e.scannerID), calc_dist(e))) \
+          .groupByKey()
+#  for k,v in d.collect():
+#    print "oopa",k,list(v)
+  d = d.map(lambda e: (e[0][0], (numpy.median(list(e[1])), e[0][1], len(e[1]))))
+#  for k,v in d.collect():
+#    print "oopb",k,v
+  d = d.reduceByKey(min)
+#  d = d.sortByKey()
   message = Message()
   changed = []
   present = []
   for sample in d.collect():
-    (who, (distance, room)) = sample
+    (who, (distance, room, count)) = sample
+#    if count < 10:
+#      print who, distance, room, count
     present.append(who)
     if who not in locations:
       locations[who] = UNKNOWN
@@ -164,7 +174,7 @@ def process2(rdd):
   mark1 = time()
 
   samples.append(mark1-mark0)
-  print mark1-mark0, numpy.mean(samples), numpy.var(samples)
+  print "perf:", mark1-mark0, numpy.mean(samples), numpy.var(samples)
 
 def protect(func):
   def _protect(rdd):
