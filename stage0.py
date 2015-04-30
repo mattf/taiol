@@ -56,6 +56,7 @@ def bucket_to_s(bucket):
   return bucket * BUCKET_WIDTH_SEC
 
 locations = {}
+missing = {}
 last_bucket = 0
 samples = collections.deque(maxlen=25)
 def process(rdd):
@@ -152,6 +153,7 @@ def process2(rdd):
 #    if count < 10:
 #      print who, distance, room, count
     present.append(who)
+    missing[who] = 5 # can miss 5 windows
     if who not in locations:
       locations[who] = UNKNOWN
     if locations[who][0] != room:
@@ -159,8 +161,10 @@ def process2(rdd):
     locations[who] = (room, distance)
   for who in locations.keys():
     if who not in present and locations[who] != UNKNOWN:
-      locations[who] = UNKNOWN
-      changed.append(who)
+      missing[who] = missing[who] - 1
+      if not missing[who]:
+        locations[who] = UNKNOWN
+        changed.append(who)
   for who in changed:
     event = {"user_id": who,
              "location_id": locations[who][0],
