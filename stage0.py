@@ -49,8 +49,6 @@ def calc_dist(event):
 
 UNKNOWN = ('Unknown', 0)
 
-BUCKET_WIDTH_SEC = 5
-
 locations = {}
 missing = {}
 retransmit = {}
@@ -124,7 +122,7 @@ def protect(func):
   return _protect
 
 host, port = opts.remote.split(':')
-ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
+ssc = StreamingContext(sc, 5)
 data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
 data.foreachRDD(protect(process))
 ssc.start()
