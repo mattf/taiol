@@ -123,6 +123,49 @@ def process(rdd):
   samples.append(mark1-mark0)
   print mark1-mark0, numpy.mean(samples), numpy.var(samples)
 
+def process2(rdd):
+  global locations
+
+  mark0 = time()
+
+  data = sqlCtx.jsonRDD(rdd)
+
+  # filter: focus only on SCANNER_READ events, messageType=0
+  # map:    extracting key: identity, value: distance and location
+  # reduce: find smallest distance per identity
+  d = data.filter(lambda e: e.messageType == 0) \
+          .map(lambda e: (e.minor, (calc_dist(e), e.scannerID))) \
+          .reduceByKey(min)
+  message = Message()
+  changed = []
+  present = []
+  for sample in d.collect():
+    (who, (distance, room)) = sample
+    present.append(who)
+    if who not in locations:
+      locations[who] = UNKNOWN
+    if locations[who][0] != room:
+      changed.append(who)
+    locations[who] = (room, distance)
+  for who in locations.keys():
+    if who not in present and locations[who] != UNKNOWN:
+      locations[who] = UNKNOWN
+      changed.append(who)
+  for who in changed:
+    event = {"user_id": who,
+             "location_id": locations[who][0],
+             "location_distance": locations[who][1]}
+    print event['user_id'], event['location_id'], event['location_distance']
+    message.address = opts.address
+    message.properties = event
+    messenger.put(message)
+    messenger.send()
+
+  mark1 = time()
+
+  samples.append(mark1-mark0)
+  print mark1-mark0, numpy.mean(samples), numpy.var(samples)
+
 def protect(func):
   def _protect(rdd):
     if rdd.take(1):
@@ -133,7 +176,7 @@ if opts.remote:
   host, port = opts.remote.split(':')
   ssc = StreamingContext(sc, BUCKET_WIDTH_SEC)
   data = ssc.socketTextStream(host, int(port), StorageLevel.MEMORY_ONLY)
-  data.foreachRDD(protect(process))
+  data.foreachRDD(protect(process2))
   ssc.start()
   ssc.awaitTermination()
 else:
