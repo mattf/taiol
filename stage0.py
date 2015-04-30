@@ -133,5 +133,4 @@ ssc.awaitTermination()
 messenger.stop()
 
 # TODO
-#  . reduce jitter
 #  . when streaming, streaming context width and bucket width should align, may result in one bucket (groupbykey)
