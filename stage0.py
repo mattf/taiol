@@ -76,9 +76,10 @@ def process(rdd):
             .filter(lambda e: e.messageType == 0) \
             .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
             .groupByKey() \
-            .map(lambda pair: (pair[0].beacon,
-                               DistanceScanner(float(numpy.median(list(pair[1]))),
-                                               pair[0].scanner))) \
+            .map(lambda (bs, ls):
+                 (bs.beacon,
+                  DistanceScanner(float(numpy.median(list(ls))),
+                                  bs.scanner))) \
             .reduceByKey(min) \
             .collect():
     (who, (distance, room)) = event
