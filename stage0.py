@@ -67,7 +67,7 @@ def process(rdd):
 
   message = Message()
 
-  for beacon, state in beacons.iteritems():
+  for state in beacons.values():
     state.present = False
 
   # filter: focus only on SCANNER_READ events, messageType=0
