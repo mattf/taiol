@@ -87,10 +87,9 @@ def process(rdd):
             .reduceByKey(min) \
             .collect():
     present.append(beacon)
-    beacons[beacon].missing = 5 # can miss 5 windows
     if beacons[beacon].location != scanner:
       changed.append(beacon)
-    beacons[beacon] = Beacon(scanner, distance, 5)
+    beacons[beacon] = Beacon(scanner, distance, 5) # can miss 5 windows
   for beacon, state in beacons.iteritems():
     if beacon not in present and state != UNKNOWN:
       state.missing -= 1
