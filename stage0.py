@@ -82,14 +82,14 @@ def process(rdd):
                                   bs.scanner))) \
             .reduceByKey(min) \
             .collect():
-    (beacon, (distance, room)) = event
+    (beacon, (distance, scanner)) = event
     present.append(beacon)
     missing[beacon] = 5 # can miss 5 windows
     if beacon not in locations:
       locations[beacon] = UNKNOWN
-    if locations[beacon][0] != room:
+    if locations[beacon][0] != scanner:
       changed.append(beacon)
-    locations[beacon] = (room, distance)
+    locations[beacon] = (scanner, distance)
   for beacon in locations.keys():
     if beacon not in present and locations[beacon] != UNKNOWN:
       missing[beacon] = missing[beacon] - 1
