@@ -94,7 +94,7 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if not state.present and state != UNKNOWN:
       state.missed += 1
-      if state.missed > 5: # can miss 5 windows
+      if state.missed >= 5: # can miss 5 windows
         beacons[beacon] = UNKNOWN
         changed.append(beacon)
   for beacon in retransmit.keys():
