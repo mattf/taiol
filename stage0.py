@@ -49,7 +49,7 @@ def calc_dist(event):
 
 UNKNOWN = ('Unknown', 0)
 
-locations = {}
+beacons = {}
 missing = {}
 retransmit = {}
 samples = deque(maxlen=25)
@@ -58,7 +58,7 @@ BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
 def process(rdd):
-  global locations
+  global beacons
 
   mark0 = time()
 
@@ -84,16 +84,16 @@ def process(rdd):
             .collect():
     present.append(beacon)
     missing[beacon] = 5 # can miss 5 windows
-    if beacon not in locations:
-      locations[beacon] = UNKNOWN
-    if locations[beacon][0] != scanner:
+    if beacon not in beacons:
+      beacons[beacon] = UNKNOWN
+    if beacons[beacon][0] != scanner:
       changed.append(beacon)
-    locations[beacon] = (scanner, distance)
-  for beacon in locations.keys():
-    if beacon not in present and locations[beacon] != UNKNOWN:
+    beacons[beacon] = (scanner, distance)
+  for beacon in beacons.keys():
+    if beacon not in present and beacons[beacon] != UNKNOWN:
       missing[beacon] = missing[beacon] - 1
       if not missing[beacon]:
-        locations[beacon] = UNKNOWN
+        beacons[beacon] = UNKNOWN
         changed.append(beacon)
   for beacon in retransmit.keys():
     retransmit[beacon] = retransmit[beacon] - 1
@@ -101,8 +101,8 @@ def process(rdd):
       changed.append(beacon)
   for beacon in changed:
     event = {"user_id": beacon,
-             "location_id": locations[beacon][0],
-             "location_distance": locations[beacon][1]}
+             "location_id": beacons[beacon][0],
+             "location_distance": beacons[beacon][1]}
     print event['user_id'], event['location_id'], event['location_distance']
     message.address = opts.address
     message.properties = event
