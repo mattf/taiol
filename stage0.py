@@ -4,7 +4,7 @@ import optparse
 from sys import argv
 from time import ctime, time
 
-from collections import deque, namedtuple
+from collections import deque, namedtuple, defaultdict
 
 import numpy
 
@@ -47,9 +47,11 @@ def calc_dist(event):
   else:
     return 0.89976*pow(ratio, 7.7095) + 0.111
 
-UNKNOWN = ('Unknown', 0)
 
-beacons = {}
+Beacon = namedtuple('Beacon', ['location', 'distance'])
+UNKNOWN = Beacon('Unknown', float('inf'))
+beacons = defaultdict(lambda: UNKNOWN)
+
 missing = {}
 retransmit = {}
 samples = deque(maxlen=25)
@@ -84,11 +86,9 @@ def process(rdd):
             .collect():
     present.append(beacon)
     missing[beacon] = 5 # can miss 5 windows
-    if beacon not in beacons:
-      beacons[beacon] = UNKNOWN
-    if beacons[beacon][0] != scanner:
+    if beacons[beacon].location != scanner:
       changed.append(beacon)
-    beacons[beacon] = (scanner, distance)
+    beacons[beacon] = Beacon(scanner, distance)
   for beacon in beacons.keys():
     if beacon not in present and beacons[beacon] != UNKNOWN:
       missing[beacon] = missing[beacon] - 1
@@ -101,8 +101,8 @@ def process(rdd):
       changed.append(beacon)
   for beacon in changed:
     event = {"user_id": beacon,
-             "location_id": beacons[beacon][0],
-             "location_distance": beacons[beacon][1]}
+             "location_id": beacons[beacon].location,
+             "location_distance": beacons[beacon].distance}
     print event['user_id'], event['location_id'], event['location_distance']
     message.address = opts.address
     message.properties = event
