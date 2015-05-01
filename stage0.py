@@ -71,7 +71,7 @@ def process(rdd):
   # group:  aggregate distance by (beacon, scanner)
   # map:    format: (beacon, (median distance, scanner))
   # reduce: select min distance by beacon
-  for event in \
+  for (beacon, (distance, scanner)) in \
       sqlCtx.jsonRDD(rdd) \
             .filter(lambda e: e.messageType == 0) \
             .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
@@ -82,7 +82,6 @@ def process(rdd):
                                   bs.scanner))) \
             .reduceByKey(min) \
             .collect():
-    (beacon, (distance, scanner)) = event
     present.append(beacon)
     missing[beacon] = 5 # can miss 5 windows
     if beacon not in locations:
