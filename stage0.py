@@ -82,34 +82,34 @@ def process(rdd):
                                   bs.scanner))) \
             .reduceByKey(min) \
             .collect():
-    (who, (distance, room)) = event
-    present.append(who)
-    missing[who] = 5 # can miss 5 windows
-    if who not in locations:
-      locations[who] = UNKNOWN
-    if locations[who][0] != room:
-      changed.append(who)
-    locations[who] = (room, distance)
-  for who in locations.keys():
-    if who not in present and locations[who] != UNKNOWN:
-      missing[who] = missing[who] - 1
-      if not missing[who]:
-        locations[who] = UNKNOWN
-        changed.append(who)
-  for who in retransmit.keys():
-    retransmit[who] = retransmit[who] - 1
-    if not retransmit[who] and who not in changed:
-      changed.append(who)
-  for who in changed:
-    event = {"user_id": who,
-             "location_id": locations[who][0],
-             "location_distance": locations[who][1]}
+    (beacon, (distance, room)) = event
+    present.append(beacon)
+    missing[beacon] = 5 # can miss 5 windows
+    if beacon not in locations:
+      locations[beacon] = UNKNOWN
+    if locations[beacon][0] != room:
+      changed.append(beacon)
+    locations[beacon] = (room, distance)
+  for beacon in locations.keys():
+    if beacon not in present and locations[beacon] != UNKNOWN:
+      missing[beacon] = missing[beacon] - 1
+      if not missing[beacon]:
+        locations[beacon] = UNKNOWN
+        changed.append(beacon)
+  for beacon in retransmit.keys():
+    retransmit[beacon] = retransmit[beacon] - 1
+    if not retransmit[beacon] and beacon not in changed:
+      changed.append(beacon)
+  for beacon in changed:
+    event = {"user_id": beacon,
+             "location_id": locations[beacon][0],
+             "location_distance": locations[beacon][1]}
     print event['user_id'], event['location_id'], event['location_distance']
     message.address = opts.address
     message.properties = event
     messenger.put(message)
     messenger.send()
-    retransmit[who] = 10 # resend location at least every 10 windows
+    retransmit[beacon] = 10 # resend location at least every 10 windows
 
   mark1 = time()
 
