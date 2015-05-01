@@ -49,10 +49,10 @@ def calc_dist(event):
 
 
 class Beacon:
-  def __init__(self, location, distance, missed, present):
-    self.location, self.distance, self.missed, self.present = location, distance, missed, present
+  def __init__(self, location, distance, missed, present, changed):
+    self.location, self.distance, self.missed, self.present, self.changed = location, distance, missed, present, changed
 
-beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False))
+beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False, True))
 
 retransmit = {}
 samples = deque(maxlen=25)
@@ -66,7 +66,6 @@ def process(rdd):
   mark0 = time()
 
   message = Message()
-  changed = []
 
   for beacon, state in beacons.iteritems():
     state.present = False
@@ -87,8 +86,7 @@ def process(rdd):
                                   bs.scanner))) \
             .reduceByKey(min) \
             .collect():
-    if beacons[beacon].location != scanner:
-      changed.append(beacon)
+    beacons[beacon].changed = beacons[beacon].location != scanner
     beacons[beacon].location = scanner
     beacons[beacon].distance = distance
     beacons[beacon].missed = 0
@@ -99,23 +97,23 @@ def process(rdd):
       state.missed += 1
       if state.missed >= 5: # can miss 5 windows
         delete.append(beacon)
-        changed.append(beacon)
   for beacon in delete:
     del beacons[beacon]
   for beacon in retransmit.keys():
     retransmit[beacon] = retransmit[beacon] - 1
-    if not retransmit[beacon] and beacon not in changed:
-      changed.append(beacon)
-  for beacon in changed:
-    event = {"user_id": beacon,
-             "location_id": beacons[beacon].location,
-             "location_distance": beacons[beacon].distance}
-    print event['user_id'], event['location_id'], event['location_distance']
-    message.address = opts.address
-    message.properties = event
-    messenger.put(message)
-    messenger.send()
-    retransmit[beacon] = 10 # resend location at least every 10 windows
+    if not retransmit[beacon] and not beacons[beacon].changed:
+      beacons[beacon].changed = True
+  for beacon, state in beacons.iteritems():
+    if state.changed:
+      event = {"user_id": beacon,
+               "location_id": beacons[beacon].location,
+               "location_distance": beacons[beacon].distance}
+      print event['user_id'], event['location_id'], event['location_distance']
+      message.address = opts.address
+      message.properties = event
+      messenger.put(message)
+      messenger.send()
+      retransmit[beacon] = 10 # resend location at least every 10 windows
 
   mark1 = time()
 
