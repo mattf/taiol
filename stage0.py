@@ -92,7 +92,7 @@ def process(rdd):
       changed.append(beacon)
     beacons[beacon] = Beacon(scanner, distance, 0, True)
   for beacon, state in beacons.iteritems():
-    if not state.present and state != UNKNOWN:
+    if not state.present:
       state.missed += 1
       if state.missed >= 5: # can miss 5 windows
         beacons[beacon] = UNKNOWN
