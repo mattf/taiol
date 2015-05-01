@@ -91,6 +91,7 @@ def process(rdd):
     beacons[beacon].distance = distance
     beacons[beacon].missed = 0
     beacons[beacon].present = True
+
   delete = []
   for beacon, state in beacons.iteritems():
     if not state.present:
@@ -99,10 +100,12 @@ def process(rdd):
         delete.append(beacon)
   for beacon in delete:
     del beacons[beacon]
+
   for beacon in retransmit.keys():
     retransmit[beacon] = retransmit[beacon] - 1
     if not retransmit[beacon] and not beacons[beacon].changed:
       beacons[beacon].changed = True
+
   for beacon, state in beacons.iteritems():
     if state.changed:
       event = {"user_id": beacon,
