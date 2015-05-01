@@ -49,8 +49,8 @@ def calc_dist(event):
 
 
 class Beacon:
-  def __init__(self, location, distance, missing):
-    self.location, self.distance, self.missing = location, distance, missing
+  def __init__(self, location, distance, missed):
+    self.location, self.distance, self.missed = location, distance, missed
 
 UNKNOWN = Beacon('Unknown', float('inf'), 0)
 beacons = defaultdict(lambda: UNKNOWN)
@@ -89,11 +89,11 @@ def process(rdd):
     present.append(beacon)
     if beacons[beacon].location != scanner:
       changed.append(beacon)
-    beacons[beacon] = Beacon(scanner, distance, 5) # can miss 5 windows
+    beacons[beacon] = Beacon(scanner, distance, 0)
   for beacon, state in beacons.iteritems():
     if beacon not in present and state != UNKNOWN:
-      state.missing -= 1
-      if not state.missing:
+      state.missed += 1
+      if state.missed > 5: # can miss 5 windows
         beacons[beacon] = UNKNOWN
         changed.append(beacon)
   for beacon in retransmit.keys():
