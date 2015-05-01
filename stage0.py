@@ -52,8 +52,7 @@ class Beacon:
   def __init__(self, location, distance, missed, present):
     self.location, self.distance, self.missed, self.present = location, distance, missed, present
 
-UNKNOWN = Beacon('Unknown', float('inf'), 0, False)
-beacons = defaultdict(lambda: UNKNOWN)
+beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False))
 
 retransmit = {}
 samples = deque(maxlen=25)
@@ -90,13 +89,19 @@ def process(rdd):
             .collect():
     if beacons[beacon].location != scanner:
       changed.append(beacon)
-    beacons[beacon] = Beacon(scanner, distance, 0, True)
+    beacons[beacon].location = scanner
+    beacons[beacon].distance = distance
+    beacons[beacon].missed = 0
+    beacons[beacon].present = True
+  delete = []
   for beacon, state in beacons.iteritems():
     if not state.present:
       state.missed += 1
       if state.missed >= 5: # can miss 5 windows
-        beacons[beacon] = UNKNOWN
+        delete.append(beacon)
         changed.append(beacon)
+  for beacon in delete:
+    del beacons[beacon]
   for beacon in retransmit.keys():
     retransmit[beacon] = retransmit[beacon] - 1
     if not retransmit[beacon] and beacon not in changed:
