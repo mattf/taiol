@@ -49,12 +49,11 @@ def calc_dist(event):
 
 
 class Beacon:
-  def __init__(self, location, distance, missed, present, changed):
-    self.location, self.distance, self.missed, self.present, self.changed = location, distance, missed, present, changed
+  def __init__(self, location, distance, missed, present, changed, retransmit_countdown):
+    self.location, self.distance, self.missed, self.present, self.changed, self.retransmit_countdown = location, distance, missed, present, changed, retransmit_countdown
 
-beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False, True))
+beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False, True, 10))
 
-retransmit = {}
 samples = deque(maxlen=25)
 
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
@@ -69,6 +68,7 @@ def process(rdd):
 
   for state in beacons.values():
     state.present = False
+    state.retransmit_countdown -= 1
 
   # filter: focus only on SCANNER_READ events, messageType=0
   # map:    format: ((beacon, scanner), distance)
@@ -102,13 +102,8 @@ def process(rdd):
   for beacon in delete:
     del beacons[beacon]
 
-  for beacon in retransmit.keys():
-    retransmit[beacon] = retransmit[beacon] - 1
-    if not retransmit[beacon] and not beacons[beacon].changed:
-      beacons[beacon].changed = True
-
   for beacon, state in beacons.iteritems():
-    if state.changed:
+    if state.changed or state.retransmit_countdown == 0:
       event = {"user_id": beacon,
                "location_id": beacons[beacon].location,
                "location_distance": beacons[beacon].distance}
@@ -117,7 +112,7 @@ def process(rdd):
       message.properties = event
       messenger.put(message)
       messenger.send()
-      retransmit[beacon] = 10 # resend location at least every 10 windows
+      state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
 
