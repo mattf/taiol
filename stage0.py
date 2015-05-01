@@ -49,10 +49,21 @@ def calc_dist(event):
 
 
 class Beacon:
-  def __init__(self, location, distance, missed, present, changed, retransmit_countdown):
-    self.location, self.distance, self.missed, self.present, self.changed, self.retransmit_countdown = location, distance, missed, present, changed, retransmit_countdown
+  def __init__(self,
+               location = 'Unknown',
+               distance = float('inf'),
+               missed = 0,
+               present = False,
+               changed = True,
+               retransmit_countdown = 10):
+    self.location = location
+    self.distance = distance
+    self.missed = missed
+    self.present = present
+    self.changed = changed
+    self.retransmit_countdown = retransmit_countdown
 
-beacons = defaultdict(lambda: Beacon('Unknown', float('inf'), 0, False, True, 10))
+beacons = defaultdict(lambda: Beacon())
 
 samples = deque(maxlen=25)
 
