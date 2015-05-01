@@ -4,7 +4,7 @@ import optparse
 from sys import argv
 from time import ctime, time
 
-import collections
+from collections import deque, namedtuple
 
 import numpy
 
@@ -52,7 +52,10 @@ UNKNOWN = ('Unknown', 0)
 locations = {}
 missing = {}
 retransmit = {}
-samples = collections.deque(maxlen=25)
+samples = deque(maxlen=25)
+
+BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
+DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
 def process(rdd):
   global locations
@@ -66,22 +69,17 @@ def process(rdd):
   # reduce: find median distance per identity, location
   # map:    extract key: identity, value: distance, location
   d = data.filter(lambda e: e.messageType == 0) \
-          .map(lambda e: ((e.minor, e.scannerID), calc_dist(e))) \
-          .groupByKey()
-#  for k,v in d.collect():
-#    print "oopa",k,list(v)
-  d = d.map(lambda e: (e[0][0], (float(numpy.median(list(e[1]))), e[0][1], len(e[1]))))
-#  for k,v in d.collect():
-#    print "oopb",k,v
-  d = d.reduceByKey(min)
-#  d = d.sortByKey()
+          .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
+          .groupByKey() \
+          .map(lambda pair: (pair[0].beacon,
+                             DistanceScanner(float(numpy.median(list(pair[1]))),
+                                             pair[0].scanner))) \
+          .reduceByKey(min)
   message = Message()
   changed = []
   present = []
-  for sample in d.collect():
-    (who, (distance, room, count)) = sample
-#    if count < 10:
-#      print who, distance, room, count
+  for event in d.collect():
+    (who, (distance, room)) = event
     present.append(who)
     missing[who] = 5 # can miss 5 windows
     if who not in locations:
