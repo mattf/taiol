@@ -86,11 +86,12 @@ def process(rdd):
                                   bs.scanner))) \
             .reduceByKey(min) \
             .collect():
-    beacons[beacon].changed = beacons[beacon].location != scanner
-    beacons[beacon].location = scanner
-    beacons[beacon].distance = distance
-    beacons[beacon].missed = 0
-    beacons[beacon].present = True
+    state = beacons[beacon]
+    state.changed = state.location != scanner
+    state.location = scanner
+    state.distance = distance
+    state.missed = 0
+    state.present = True
 
   delete = []
   for beacon, state in beacons.iteritems():
