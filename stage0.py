@@ -48,11 +48,13 @@ def calc_dist(event):
     return 0.89976*pow(ratio, 7.7095) + 0.111
 
 
-Beacon = namedtuple('Beacon', ['location', 'distance'])
-UNKNOWN = Beacon('Unknown', float('inf'))
+class Beacon:
+  def __init__(self, location, distance, missing):
+    self.location, self.distance, self.missing = location, distance, missing
+
+UNKNOWN = Beacon('Unknown', float('inf'), 0)
 beacons = defaultdict(lambda: UNKNOWN)
 
-missing = {}
 retransmit = {}
 samples = deque(maxlen=25)
 
@@ -85,14 +87,14 @@ def process(rdd):
             .reduceByKey(min) \
             .collect():
     present.append(beacon)
-    missing[beacon] = 5 # can miss 5 windows
+    beacons[beacon].missing = 5 # can miss 5 windows
     if beacons[beacon].location != scanner:
       changed.append(beacon)
-    beacons[beacon] = Beacon(scanner, distance)
+    beacons[beacon] = Beacon(scanner, distance, 5)
   for beacon in beacons.keys():
     if beacon not in present and beacons[beacon] != UNKNOWN:
-      missing[beacon] = missing[beacon] - 1
-      if not missing[beacon]:
+      beacons[beacon].missing -= 1
+      if not beacons[beacon].missing:
         beacons[beacon] = UNKNOWN
         changed.append(beacon)
   for beacon in retransmit.keys():
