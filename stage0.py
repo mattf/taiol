@@ -65,9 +65,10 @@ def process(rdd):
   data = sqlCtx.jsonRDD(rdd)
 
   # filter: focus only on SCANNER_READ events, messageType=0
-  # map:    extracting key: identity, location, value: distance
-  # reduce: find median distance per identity, location
-  # map:    extract key: identity, value: distance, location
+  # map:    format: ((beacon, scanner), distance)
+  # group:  aggregate distance by (beacon, scanner)
+  # map:    format: (beacon, (median distance, scanner))
+  # reduce: select min distance by beacon
   d = data.filter(lambda e: e.messageType == 0) \
           .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
           .groupByKey() \
