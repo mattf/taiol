@@ -62,24 +62,25 @@ def process(rdd):
 
   mark0 = time()
 
-  data = sqlCtx.jsonRDD(rdd)
+  message = Message()
+  changed = []
+  present = []
 
   # filter: focus only on SCANNER_READ events, messageType=0
   # map:    format: ((beacon, scanner), distance)
   # group:  aggregate distance by (beacon, scanner)
   # map:    format: (beacon, (median distance, scanner))
   # reduce: select min distance by beacon
-  d = data.filter(lambda e: e.messageType == 0) \
-          .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
-          .groupByKey() \
-          .map(lambda pair: (pair[0].beacon,
-                             DistanceScanner(float(numpy.median(list(pair[1]))),
-                                             pair[0].scanner))) \
-          .reduceByKey(min)
-  message = Message()
-  changed = []
-  present = []
-  for event in d.collect():
+  for event in \
+      sqlCtx.jsonRDD(rdd) \
+            .filter(lambda e: e.messageType == 0) \
+            .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
+            .groupByKey() \
+            .map(lambda pair: (pair[0].beacon,
+                               DistanceScanner(float(numpy.median(list(pair[1]))),
+                                               pair[0].scanner))) \
+            .reduceByKey(min) \
+            .collect():
     (who, (distance, room)) = event
     present.append(who)
     missing[who] = 5 # can miss 5 windows
