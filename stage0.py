@@ -91,10 +91,10 @@ def process(rdd):
     if beacons[beacon].location != scanner:
       changed.append(beacon)
     beacons[beacon] = Beacon(scanner, distance, 5)
-  for beacon in beacons.keys():
-    if beacon not in present and beacons[beacon] != UNKNOWN:
-      beacons[beacon].missing -= 1
-      if not beacons[beacon].missing:
+  for beacon, state in beacons.iteritems():
+    if beacon not in present and state != UNKNOWN:
+      state.missing -= 1
+      if not state.missing:
         beacons[beacon] = UNKNOWN
         changed.append(beacon)
   for beacon in retransmit.keys():
