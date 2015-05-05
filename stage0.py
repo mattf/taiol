@@ -71,25 +71,21 @@ samples = deque(maxlen=25)
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
-def emit_enter(message, beacon, state):
-  event = {"type": "check-in",
+def _emit(message, type, beacon, location):
+  event = {"type": type,
            "user_id": beacon,
-           "location_id": state.location}
-  print event['user_id'], 'enter', event['location_id']
+           "location_id": location}
+  print event['user_id'], event['type'], event['location_id']
   message.address = opts.address
   message.properties = event
   messenger.put(message)
   messenger.send()
 
+def emit_enter(message, beacon, state):
+  _emit(message, 'check-in', beacon, state.location)
+
 def emit_exit(message, beacon, state):
-  event = {"type": "check-out",
-           "user_id": beacon,
-           "location_id": state.last_location}
-  print event['user_id'], 'exit', event['location_id']
-  message.address = opts.address
-  message.properties = event
-  messenger.put(message)
-  messenger.send()
+  _emit(message, 'check-out', beacon, state.last_location)
 
 def process(rdd):
   global beacons
