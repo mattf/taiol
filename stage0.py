@@ -74,9 +74,8 @@ DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 def emit_enter(message, beacon, state):
   event = {"type": "check-in",
            "user_id": beacon,
-           "location_id": state.location,
-           "location_distance": state.distance}
-  print event['user_id'], 'enter', event['location_id'], event['location_distance']
+           "location_id": state.location}
+  print event['user_id'], 'enter', event['location_id']
   message.address = opts.address
   message.properties = event
   messenger.put(message)
