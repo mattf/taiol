@@ -34,6 +34,8 @@ if not opts.remote:
 messenger = opts.address and Messenger() or Null()
 messenger.start()
 
+message = Message()
+
 sc = SparkContext("local[4]", appName="stage0")
 
 sqlCtx = SQLContext(sc)
@@ -71,7 +73,7 @@ samples = deque(maxlen=25)
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
-def _emit(message, type, beacon, location):
+def _emit(type, beacon, location):
   event = {"type": type,
            "user_id": beacon,
            "location_id": location}
@@ -81,18 +83,16 @@ def _emit(message, type, beacon, location):
   messenger.put(message)
   messenger.send()
 
-def emit_enter(message, beacon, state):
-  _emit(message, 'check-in', beacon, state.location)
+def emit_enter(beacon, state):
+  _emit('check-in', beacon, state.location)
 
-def emit_exit(message, beacon, state):
-  _emit(message, 'check-out', beacon, state.last_location)
+def emit_exit(beacon, state):
+  _emit('check-out', beacon, state.last_location)
 
 def process(rdd):
   global beacons
 
   mark0 = time()
-
-  message = Message()
 
   for state in beacons.values():
     state.changed = False # don't repeat check-in events for beacon that is missing
@@ -137,12 +137,12 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if state.changed or state.retransmit_countdown == 0:
       if state.location[-1] == 'x':
-        emit_exit(message, beacon, state)
+        emit_exit(beacon, state)
       else:
         if (state.last_location[-1] != 'x' and
             state.retransmit_countdown > 0):
-          emit_exit(message, beacon, state)
-        emit_enter(message, beacon, state)
+          emit_exit(beacon, state)
+        emit_enter(beacon, state)
       state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
