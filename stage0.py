@@ -138,7 +138,8 @@ def process(rdd):
       if state.location[-1] == 'x':
         emit_exit(message, beacon, state)
       else:
-        if state.last_location[-1] != 'x':
+        if (state.last_location[-1] != 'x' and
+            state.retransmit_countdown > 0):
           emit_exit(message, beacon, state)
         emit_enter(message, beacon, state)
       state.retransmit_countdown = 10 # resend location at least every 10 windows
