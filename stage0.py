@@ -51,6 +51,7 @@ def calc_dist(event):
 class Beacon:
   def __init__(self,
                location = 'Unknown',
+               last_location = 'Unknown',
                distance = float('inf'),
                missed = 0,
                present = False,
@@ -69,6 +70,18 @@ samples = deque(maxlen=25)
 
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
+
+def emit_enter(message, beacon, state):
+  event = {"type": "check-in",
+           "user_id": beacon,
+           "location_id": state.location,
+           "location_distance": state.distance}
+  print event['user_id'], 'enter', event['location_id'], event['location_distance']
+  message.address = opts.address
+  message.properties = event
+  messenger.put(message)
+  messenger.send()
+  state.retransmit_countdown = 10 # resend location at least every 10 windows
 
 def process(rdd):
   global beacons
@@ -99,6 +112,7 @@ def process(rdd):
             .collect():
     state = beacons[beacon]
     state.changed = state.location != scanner
+    state.last_location = state.location
     state.location = scanner
     state.distance = distance
     state.missed = 0
@@ -114,16 +128,10 @@ def process(rdd):
     del beacons[beacon]
 
   for beacon, state in beacons.iteritems():
-    if state.changed or state.retransmit_countdown == 0:
-      event = {"user_id": beacon,
-               "location_id": beacons[beacon].location,
-               "location_distance": beacons[beacon].distance}
-      print event['user_id'], event['location_id'], event['location_distance']
-      message.address = opts.address
-      message.properties = event
-      messenger.put(message)
-      messenger.send()
-      state.retransmit_countdown = 10 # resend location at least every 10 windows
+    if state.retransmit_countdown == 0:
+      emit_enter(message, beacon, beacons[beacon])
+    elif state.changed:
+      emit_enter(message, beacon, beacons[beacon])
 
   mark1 = time()
 
