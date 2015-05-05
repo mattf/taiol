@@ -82,6 +82,16 @@ def emit_enter(message, beacon, state):
   messenger.put(message)
   messenger.send()
 
+def emit_exit(message, beacon, state):
+  event = {"type": "check-out",
+           "user_id": beacon,
+           "location_id": state.last_location}
+  print event['user_id'], 'exit', event['location_id']
+  message.address = opts.address
+  message.properties = event
+  messenger.put(message)
+  messenger.send()
+
 def process(rdd):
   global beacons
 
@@ -128,9 +138,13 @@ def process(rdd):
 
   for beacon, state in beacons.iteritems():
     if state.retransmit_countdown == 0:
-      emit_enter(message, beacon, state)
+      if state.location[-1] != 'x':
+        emit_enter(message, beacon, state)
     elif state.changed:
-      emit_enter(message, beacon, state)
+      if state.location[-1] == 'x':
+        emit_exit(message, beacon, state)
+      else:
+        emit_enter(message, beacon, state)
 
     if state.retransmit_countdown == 0 or state.changed:
       state.retransmit_countdown = 10 # resend location at least every 10 windows
