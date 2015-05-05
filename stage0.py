@@ -87,9 +87,6 @@ def emit_enter(message, beacon, state):
 def emit_exit(message, beacon, state):
   _emit(message, 'check-out', beacon, state.last_location)
 
-def emit_resend(message, beacon, state):
-  _emit(message, 'resend', beacon, state.location)
-
 def process(rdd):
   global beacons
 
@@ -120,8 +117,9 @@ def process(rdd):
             .collect():
     state = beacons[beacon]
     state.changed = state.location != scanner
-    state.last_location = state.location
-    state.location = scanner
+    if state.changed:
+      state.last_location = state.location
+      state.location = scanner
     state.distance = distance
     state.missed = 0
     state.present = True
@@ -136,18 +134,13 @@ def process(rdd):
     del beacons[beacon]
 
   for beacon, state in beacons.iteritems():
-    if state.retransmit_countdown == 0:
-      if state.location[-1] != 'x':
-        emit_resend(message, beacon, state)
-    elif state.changed:
+    if state.changed or state.retransmit_countdown == 0:
       if state.location[-1] == 'x':
         emit_exit(message, beacon, state)
       else:
         if state.last_location[-1] != 'x':
           emit_exit(message, beacon, state)
         emit_enter(message, beacon, state)
-
-    if state.retransmit_countdown == 0 or state.changed:
       state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
