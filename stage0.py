@@ -81,7 +81,6 @@ def emit_enter(message, beacon, state):
   message.properties = event
   messenger.put(message)
   messenger.send()
-  state.retransmit_countdown = 10 # resend location at least every 10 windows
 
 def process(rdd):
   global beacons
@@ -132,6 +131,9 @@ def process(rdd):
       emit_enter(message, beacon, beacons[beacon])
     elif state.changed:
       emit_enter(message, beacon, beacons[beacon])
+
+    if state.retransmit_countdown == 0 or state.changed:
+      state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
 
