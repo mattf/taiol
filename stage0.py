@@ -98,6 +98,7 @@ def process(rdd):
   message = Message()
 
   for state in beacons.values():
+    state.changed = False # don't repeat check-in events for beacon that is missing
     state.present = False
     state.retransmit_countdown -= 1
 
