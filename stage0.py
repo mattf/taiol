@@ -54,13 +54,11 @@ class Beacon:
   def __init__(self,
                location = 'Unknown',
                last_location = 'Unknown',
-               distance = float('inf'),
                missed = 0,
                present = False,
                changed = True,
                retransmit_countdown = 10):
     self.location = location
-    self.distance = distance
     self.missed = missed
     self.present = present
     self.changed = changed
@@ -90,8 +88,6 @@ def emit_exit(beacon, state):
   _emit('check-out', beacon, state.last_location)
 
 def process(rdd):
-  global beacons
-
   mark0 = time()
 
   for state in beacons.values():
@@ -120,7 +116,6 @@ def process(rdd):
     if state.changed:
       state.last_location = state.location
       state.location = scanner
-    state.distance = distance
     state.missed = 0
     state.present = True
 
