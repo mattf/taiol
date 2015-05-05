@@ -131,6 +131,7 @@ def process(rdd):
       if state.missed >= 5: # can miss 5 windows
         delete.append(beacon)
   for beacon in delete:
+    # todo: emit something when a beacon goes missing, likely exit of last non-x location
     del beacons[beacon]
 
   for beacon, state in beacons.iteritems():
