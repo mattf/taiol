@@ -128,9 +128,9 @@ def process(rdd):
 
   for beacon, state in beacons.iteritems():
     if state.retransmit_countdown == 0:
-      emit_enter(message, beacon, beacons[beacon])
+      emit_enter(message, beacon, state)
     elif state.changed:
-      emit_enter(message, beacon, beacons[beacon])
+      emit_enter(message, beacon, state)
 
     if state.retransmit_countdown == 0 or state.changed:
       state.retransmit_countdown = 10 # resend location at least every 10 windows
