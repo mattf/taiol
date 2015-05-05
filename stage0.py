@@ -87,6 +87,9 @@ def emit_enter(message, beacon, state):
 def emit_exit(message, beacon, state):
   _emit(message, 'check-out', beacon, state.last_location)
 
+def emit_resend(message, beacon, state):
+  _emit(message, 'resend', beacon, state.location)
+
 def process(rdd):
   global beacons
 
@@ -134,7 +137,7 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if state.retransmit_countdown == 0:
       if state.location[-1] != 'x':
-        emit_enter(message, beacon, state)
+        emit_resend(message, beacon, state)
     elif state.changed:
       if state.location[-1] == 'x':
         emit_exit(message, beacon, state)
