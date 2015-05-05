@@ -143,6 +143,7 @@ def process(rdd):
       if state.location[-1] == 'x':
         emit_exit(message, beacon, state)
       else:
+        emit_exit(message, beacon, state)
         emit_enter(message, beacon, state)
 
     if state.retransmit_countdown == 0 or state.changed:
