@@ -74,7 +74,8 @@ DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 def _emit(type, beacon, location, retransmit=False):
   event = {"type": type,
            "user_id": beacon,
-           "location_id": location}
+           "location_id": location,
+           "timestamp": int(time())}
   if retransmit:
     event["retransmit"] = True
   print event['user_id'], event['type'], event['location_id'], retransmit and "retransmit" or ""
