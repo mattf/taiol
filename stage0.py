@@ -71,21 +71,23 @@ samples = deque(maxlen=25)
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
-def _emit(type, beacon, location):
+def _emit(type, beacon, location, retransmit=False):
   event = {"type": type,
            "user_id": beacon,
            "location_id": location}
-  print event['user_id'], event['type'], event['location_id']
+  if retransmit:
+    event["retransmit"] = True
+  print event['user_id'], event['type'], event['location_id'], retransmit and "retransmit" or ""
   message.address = opts.address
   message.properties = event
   messenger.put(message)
   messenger.send()
 
-def emit_enter(beacon, state):
-  _emit('check-in', beacon, state.location)
+def emit_enter(beacon, state, retransmit=False):
+  _emit('check-in', beacon, state.location, retransmit)
 
-def emit_exit(beacon, state):
-  _emit('check-out', beacon, state.last_location)
+def emit_exit(beacon, state, retransmit=False):
+  _emit('check-out', beacon, state.last_location, retransmit)
 
 def process(rdd):
   mark0 = time()
@@ -132,12 +134,12 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if state.changed or state.retransmit_countdown == 0:
       if state.location[-1] == 'x':
-        emit_exit(beacon, state)
+        emit_exit(beacon, state, state.retransmit_countdown == 0)
       else:
         if (state.last_location[-1] != 'x' and
             state.retransmit_countdown > 0):
           emit_exit(beacon, state)
-        emit_enter(beacon, state)
+        emit_enter(beacon, state, state.retransmit_countdown == 0)
       state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
