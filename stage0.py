@@ -71,11 +71,11 @@ samples = deque(maxlen=25)
 BeaconScanner = namedtuple('BeaconScanner', ['beacon', 'scanner'])
 DistanceScanner = namedtuple('DistanceScanner', ['distance', 'scanner'])
 
-def _emit(type, beacon, location, retransmit=False):
+def _emit(type, beacon, location, retransmit=False, count=0):
   event = {"type": type,
            "user_id": beacon,
            "location_id": location,
-           "timestamp": int(time())}
+           "timestamp": int(time()) * 1000 + count}
   if retransmit:
     event["retransmit"] = True
   print event['user_id'], event['type'], event['location_id'], retransmit and "retransmit" or ""
@@ -84,11 +84,11 @@ def _emit(type, beacon, location, retransmit=False):
   messenger.put(message)
   messenger.send()
 
-def emit_enter(beacon, state, retransmit=False):
-  _emit('check-in', beacon, state.location, retransmit)
+def emit_enter(beacon, state, retransmit=False, count=0):
+  _emit('check-in', beacon, state.location, retransmit, count)
 
-def emit_exit(beacon, state, retransmit=False):
-  _emit('check-out', beacon, state.last_location, retransmit)
+def emit_exit(beacon, state, retransmit=False, count=0):
+  _emit('check-out', beacon, state.last_location, retransmit, count)
 
 def process(rdd):
   mark0 = time()
@@ -132,15 +132,19 @@ def process(rdd):
     # todo: emit something when a beacon goes missing, likely exit of last non-x location
     del beacons[beacon]
 
+  count = 0
   for beacon, state in beacons.iteritems():
     if state.changed or state.retransmit_countdown == 0:
       if state.location[-1] == 'x':
-        emit_exit(beacon, state, state.retransmit_countdown == 0)
+        emit_exit(beacon, state, state.retransmit_countdown == 0, count)
+        count += 1
       else:
         if (state.last_location[-1] != 'x' and
             state.retransmit_countdown > 0):
-          emit_exit(beacon, state)
-        emit_enter(beacon, state, state.retransmit_countdown == 0)
+          emit_exit(beacon, state, count=count)
+          count += 1
+        emit_enter(beacon, state, state.retransmit_countdown == 0, count)
+        count += 1
       state.retransmit_countdown = 10 # resend location at least every 10 windows
 
   mark1 = time()
