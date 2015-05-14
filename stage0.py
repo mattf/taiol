@@ -136,8 +136,9 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if state.changed or state.retransmit_countdown == 0:
       if state.location[-1] == 'x':
-        emit_exit(beacon, state, state.retransmit_countdown == 0, count)
-        count += 1
+        if state.last_location[-1] != 'x':
+          emit_exit(beacon, state, state.retransmit_countdown == 0, count)
+          count += 1
       else:
         if (state.last_location[-1] != 'x' and
             state.retransmit_countdown > 0):
