@@ -23,7 +23,7 @@ parser = optparse.OptionParser(
   description="Process a stream of events and emit results to stdout or an AMQP 1.0 address")
 parser.add_option("-a", "--address", default=None,
                   help="AMQP 1.0 address, e.g. amqp://0.0.0.0/name")
-parser.add_option("-r", "--remote", default=None,
+parser.add_option("-r", "--remote", default="localhost:1984",
                   help="Read data from a remote endpoint, e.g. localhost:1984")
 opts, args = parser.parse_args()
 
