@@ -6,16 +6,21 @@ Massage data, need 1:1 event:line -
 
 gunzip -c SevenScannersRun-2015-05-11.json.gz | sed 's/}{/}\n{/' | awk '{ORS=""; print} /}/ {ORS="\n"; print ""}' > data.json
 
-Run stage0.py -
+Run -
 
 (only need to do these once)
 sudo docker build -t spark docker-spark
 sudo docker build -t taiol docker-taiol
 
-sudo docker run --privileged -w /mnt -v $PWD:/mnt -it taiol spark-submit stage0.py -a amqp://1.2.3.4/name -d data.json
+(do this whenever you change the processing layer)
+sudo docker build -t demo2015 docker-demo2015
+
+sudo docker run -t demo2015 <src address, e.g. amqp://1.2.3.4/name> <dest address, e.g. amqp://1.2.3.4/name_processed>
 
 Other -
 
 Stage data: sudo docker run --privileged -w /mnt -v $PWD:/mnt -it taiol ./play.py data.json amqp://1.2.3.4/name
-Fordwarder: sudo docker run --privileged -p 1984:1984 -w /mnt -v $PWD:/mnt -it taiol ./forward.py amqp://1.2.3.4/name
+Fordwarder: sudo docker run --privileged -p 1984:1984 -w /mnt -v $PWD:/mnt -it taiol ./docker-demo2015/forward.py amqp://1.2.3.4/name
 Archiver: ./archive amqp://1.2.3.4/name
+Processor: sudo docker run --privileged -w /mnt -v $PWD:/mnt -it taiol spark-submit docker-demo2015/stage0.py -a amqp://1.2.3.4/name -d data.json
+
