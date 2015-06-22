@@ -129,7 +129,7 @@ def process(rdd):
       if state.missed >= 1440: # can miss 1440 windows, ~2 hours
         delete.append(beacon)
   for beacon in delete:
-    # todo: emit something when a beacon goes missing, likely exit of last non-x location
+    _emit('check-out', beacon, "Entrance")
     del beacons[beacon]
 
   count = 0
