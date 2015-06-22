@@ -126,7 +126,7 @@ def process(rdd):
   for beacon, state in beacons.iteritems():
     if not state.present:
       state.missed += 1
-      if state.missed >= 1440: # can miss 1440 windows, ~2 hours
+      if state.missed >= 1080: # can miss 1080 windows, ~1.5 hours
         delete.append(beacon)
   for beacon in delete:
     _emit('check-out', beacon, "Entrance")
