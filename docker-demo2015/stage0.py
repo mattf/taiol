@@ -128,7 +128,7 @@ def process(rdd):
       state.missed += 1
       if state.missed >= 1080: # can miss 1080 windows, ~1.5 hours
         delete.append(beacon)
-      elif state.missed >= 180: # can miss 180 windows, ~15 min
+      elif state.missed >= 180 and state.location != "General": # can miss 180 windows, ~15 min
         # this is an artificial checkout
         state = beacons[beacon]
         state.last_location = state.location
