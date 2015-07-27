@@ -105,7 +105,7 @@ def process(rdd):
   # reduce: select min distance by beacon
   for (beacon, (distance, scanner)) in \
       sqlCtx.jsonRDD(rdd) \
-            .filter(lambda e: e.messageType == 0) \
+            .filter('messageType = 0') \
             .map(lambda e: (BeaconScanner(e.minor, e.scannerID), calc_dist(e))) \
             .groupByKey() \
             .map(lambda (bs, ls):
