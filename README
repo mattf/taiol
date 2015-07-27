@@ -8,8 +8,7 @@ gunzip -c SevenScannersRun-2015-05-11.json.gz | sed 's/}{/}\n{/' | awk '{ORS="";
 
 Run -
 
-(only need to do these once)
-sudo docker build -t spark docker-spark
+(only need to do this once)
 sudo docker build -t taiol docker-taiol
 
 (do this whenever you change the processing layer)
